@@ -1,0 +1,27 @@
+name: example
+description: "A new Flutter project."
+publish_to: 'none'
+version: 1.0.0+1
+
+environment:
+  sdk: ^3.7.0
+
+dependencies:
+  flutter:
+    sdk: flutter
+  cupertino_icons: ^1.0.8
+  sqlite3_flutter_libs: ^0.5.32
+  sqlite3: ^2.7.5
+  path_provider: ^2.1.5
+  file: ^7.0.1
+  sqlite_fs:
+    path: ..
+  signals: ^6.0.2
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^5.0.0
+
+flutter:
+  uses-material-design: true
