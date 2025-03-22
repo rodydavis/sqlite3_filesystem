@@ -167,6 +167,7 @@ class FileSystemEntityWidget extends StatelessWidget {
   Widget build(BuildContext context) {
     final isDir = entity is Directory;
     final isLink = entity is Link;
+    final isFile = entity is File;
     final isSelected = entity.path == selected;
     final colors = Theme.of(context).colorScheme;
     final bgColor = isDir ? colors.secondary : colors.primary;
@@ -188,10 +189,14 @@ class FileSystemEntityWidget extends StatelessWidget {
             child: Center(
               child: Icon(
                 isDir
-                    ? Icons.folder
+                    ? isLink
+                        ? Icons.folder_outlined
+                        : Icons.folder
+                    : isFile
+                    ? Icons.file_copy
                     : isLink
                     ? Icons.file_copy_outlined
-                    : Icons.file_copy,
+                    : Icons.error,
                 color: bgColor,
                 size: 48,
               ),
