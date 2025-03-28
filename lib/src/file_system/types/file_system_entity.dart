@@ -1,7 +1,6 @@
 part of '../fs.dart';
 
-abstract class SqliteFileSystemEntity<T extends FileSystemEntity>
-    extends FileSystemEntity {
+abstract class SqliteFileSystemEntity<T extends FileSystemEntity> extends FileSystemEntity {
   SqliteFileSystemEntity(this.fileSystem, this.path);
 
   io.FileSystemEntityType get expectedType;
@@ -14,7 +13,8 @@ abstract class SqliteFileSystemEntity<T extends FileSystemEntity>
   @override
   final String path;
 
-  final controller = StreamController<FileSystemEvent>.broadcast();
+  static final _controller = StreamController<FileSystemEvent>.broadcast();
+  StreamController<FileSystemEvent> get controller => _controller;
 
   void _checkFile(String path) {
     var file = db.file(path);
@@ -55,12 +55,7 @@ abstract class SqliteFileSystemEntity<T extends FileSystemEntity>
   @override
   void deleteSync({bool recursive = false}) {
     db.deleteFile(path);
-    controller.add(
-      FileSystemDeleteEvent(
-        path,
-        expectedType == io.FileSystemEntityType.directory,
-      ),
-    );
+    controller.add(FileSystemDeleteEvent(path, expectedType == io.FileSystemEntityType.directory));
   }
 
   @override
@@ -90,13 +85,8 @@ abstract class SqliteFileSystemEntity<T extends FileSystemEntity>
   T renameSync(String newPath) {
     _checkFile(path);
     db.execute('UPDATE files SET path = ? WHERE path = ?', [newPath, path]);
-    controller.add(
-      FileSystemMoveEvent(
-        path,
-        expectedType == io.FileSystemEntityType.directory,
-        newPath,
-      ),
-    );
+    // TODO: Rename references
+    controller.add(FileSystemMoveEvent(path, expectedType == io.FileSystemEntityType.directory, newPath));
     return fileSystem.file(newPath) as T;
   }
 
@@ -140,10 +130,12 @@ abstract class SqliteFileSystemEntity<T extends FileSystemEntity>
   }
 
   @override
-  Stream<FileSystemEvent> watch({
-    int events = FileSystemEvent.all,
-    bool recursive = false,
-  }) => controller.stream.filter(events);
+  Stream<FileSystemEvent> watch({int events = FileSystemEvent.all, bool recursive = false}) {
+    var s = _controller.stream;
+    s = s.where((event) => event.type & events != 0);
+    if (!recursive) s = s.where((e) => e.path == path);
+    return s;
+  }
 }
 
 class LinkCycleException implements Exception {
@@ -153,10 +145,4 @@ class LinkCycleException implements Exception {
 
   @override
   String toString() => 'Link cycle detected at $path';
-}
-
-extension on Stream<FileSystemEvent> {
-  Stream<FileSystemEvent> filter(int type) {
-    return where((event) => event.type & type != 0);
-  }
 }
